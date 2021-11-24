@@ -6,17 +6,37 @@ import Button from '../../components/Button';
 import '../../styles/auth.scss'
 import { useAuth } from '../../hooks/useAuth'
 import Banner from '../Banner'
+import { FormEvent, useState } from 'react';
+import { database } from '../../services/firebase';
+import toast, { Toaster } from 'react-hot-toast';
 
 export const Home: React.FC = () => {
   const history = useHistory();
   const { user, signInWithGoogle } = useAuth();
+  const [roomCode, setRoomCode] = useState('');
 
   const handleCreateNewRoom = async () => {
     if (!user) {
       await signInWithGoogle();
     }
 
-    history.push('/room/new');
+    history.push('/rooms/new');
+  }
+
+  const handleJoinNewRoom = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if(roomCode.trim() === '') return;
+
+    const roomRef = await database.ref(`rooms/${roomCode}`).get();
+
+    if(!roomRef.exists()) {
+      toast.error('A sala procurada não existe.');
+      setRoomCode('');
+      return;
+    }
+
+    history.push(`/rooms/${roomCode}`);
   }
 
   return (
@@ -30,10 +50,12 @@ export const Home: React.FC = () => {
             Crie sua sala com o Google
           </Button>
           <div className="separator">ou entre em uma sala</div>
-          <form>
+          <form onSubmit={handleJoinNewRoom}>
             <input
               type="text"
               placeholder="Digite o código da sala"
+              onChange={event => setRoomCode(event.target.value)}
+              value={roomCode}
             />
             <Button type="submit">
               <img src={enterImg} alt="Icone indicando entrada na sala" />
@@ -42,6 +64,10 @@ export const Home: React.FC = () => {
           </form>
         </div>
       </main>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+      />
     </div>
   )
 }
