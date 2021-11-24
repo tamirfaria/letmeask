@@ -1,30 +1,37 @@
 import { FormEvent, useState } from 'react';
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import logoImg from '../../assets/images/logo.svg'
 import '../../styles/auth.scss'
 import Button from '../../components/Button';
 import Banner from '../Banner';
 import { database } from '../../services/firebase';
 import { useAuth } from '../../hooks/useAuth';
+import toast, { Toaster } from 'react-hot-toast';
+
 
 
 export const NewRoom: React.FC = () => {
   const { user } = useAuth();
-
   const [newRoom, setNewRoom] = useState('');
+  const history = useHistory();
 
   const handleNewRoom = async (event: FormEvent) => {
     event.preventDefault();
 
     if (newRoom.trim() === '') return;
 
-    const roomRef = database.ref('room');
+    const roomRef = database.ref('rooms');
 
     const firebaseRoom = await roomRef.push({
       title: newRoom,
       authorId: user?.id,
-    })
+    });
 
+    toast.success('Sala criada com sucesso!');
+
+    setTimeout(() => {
+      history.push(`/rooms/${firebaseRoom.key}`);
+    }, 1500)
   }
 
   return (
@@ -37,7 +44,7 @@ export const NewRoom: React.FC = () => {
           <form onSubmit={handleNewRoom}>
             <input
               type="text"
-              placeholder="Digite o código da sala"
+              placeholder="Crie um título para a sala"
               onChange={event => setNewRoom(event.target.value)}
               value={newRoom}
             />
@@ -51,6 +58,10 @@ export const NewRoom: React.FC = () => {
           </p>
         </div>
       </main>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+      />
     </div>
   )
 }
